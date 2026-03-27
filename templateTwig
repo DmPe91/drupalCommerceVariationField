@@ -1,0 +1,64 @@
+<article class="product-view-full">
+    <div class="product-teaser">
+        <div class="product-teaser-image">
+            {# Поля товара (вывод через рендеринг) #}
+            {{ product.field_slayder_fotografii }}
+        </div>
+        <div class="product-teaser-info">
+            {# Работа с вариациями через объект product_entity #}
+            {% set product_entity = product_entity %}
+            
+            {% if product_entity %}
+                {% set variation = product_entity.getDefaultVariation() %}
+                {% if variation %}
+                    {% set price = variation.getPrice() %}
+                    <div class="product-price">
+                        {{ price.number|number_format(0, '', ' ') }} ₽
+                    </div>
+                {% endif %}
+            {% endif %}
+            
+            {# Виджет вариаций (рендеринг) #}
+            <div class="pt-var">
+                {{ product.variations }}
+            </div>
+            
+            {# Описание (поле товара) #}
+            {{ product.body }}
+            
+            {# Блок для динамических параметров #}
+            <div class="product-parametry-izdeliya-wrapper">
+                {% if variation and variation.field_parametry_izdeliya.value %}
+                    <div class="product-parametry-izdeliya">
+                        <div class="field__label">Параметры изделия</div>
+                        {{ variation.field_parametry_izdeliya.value|raw }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            {# Состав и параметры модели (поля товара) #}
+            {{ product.field_sostav }}
+            {{ product.field_parametry_modeli }}
+        </div>
+    </div>
+</article>
+{# Добавьте в самый конец шаблона, после закрывающего тега article #}
+
+{% if product_entity %}
+    {% set variations_data = [] %}
+    {% set variations = product_entity.getVariations() %}
+    
+    {% for variation in variations %}
+        {% set variation_data = {
+            'id': variation.id(),
+            'size': variation.attribute_size.entity.name.value|default(''),
+            'size_id': variation.attribute_size.target_id|default(''),
+            'parametry_izdeliya': variation.field_parametry_izdeliya.value|default('')
+        } %}
+        {% set variations_data = variations_data|merge([variation_data]) %}
+    {% endfor %}
+    
+    <script type="application/json" data-product-variations>
+        {{ variations_data|json_encode|raw }}
+    </script>
+{% endif %}
